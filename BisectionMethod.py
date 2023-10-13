@@ -39,7 +39,7 @@ def bisect_Method(tol, maxit, ends):
         fa = func(a)
 
         if fc == 0 or (b-a)/2 < tol:
-            root = "\nRoot found x = " + str(c) + " in " + str(it) + " Iterations\n"
+            root = "\nRoot found x = " + str(np.round(c,3)) + " in " + str(it) + " Iterations\n"
             return root
         
         #increment number of iterations
