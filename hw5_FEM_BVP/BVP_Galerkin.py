@@ -16,8 +16,11 @@ a=0
 b=1
 
 #define my basis function
-def basis(i,x):
+def Basis(i,x):
     return np.sin(i*np.pi*x)
+
+def dBasis(i,x):
+    return i*np.pi*np.sin(i*np.pi*x)
 
 def K_and_fvec():
     """ Calculate Stiffness and load vector via the Galerkin method
@@ -28,9 +31,11 @@ def K_and_fvec():
     
     """
     K = np.zeros(N,N)
+    f = np.zeros(1,N)
+
     sumresult=0
     for i in range(0, N):
-        sumresult += basis(i,x)
+        sumresult += Basis(i,x)*dBasis(i,x)
 
 def main():
     """ Main entry point of the script """
