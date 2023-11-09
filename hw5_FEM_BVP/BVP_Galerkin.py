@@ -1,70 +1,70 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.integrate import quad
+import matplotlib.pyplot as plt
 
-"""
-Solving the boundary value problem with 
-    -y'' = x 
-where
-    y(0) = y(1) = 0
-"""
-#define my basis function
-def Basis(i,x):
-    return np.sin(i*np.pi*x)
+# Define the constants and the number of basis functions
+k = 1.0  # Assuming a constant for simplicity
+N = 3  # Number of basis functions
 
-#define my basis function
-def Basis_deriv(i,x):
-    return i*np.pi*np.cos(i*np.pi*x)
+# Define the basis functions and their derivatives
+def basis_function(x, i):
+    return np.sin(i * np.pi * x)
 
-def Galerkin_kf(N,a,b):
-    """ Calculate Stiffness and load vector via the Galerkin method and solve ku=f
-     
-     Args:
+def basis_derivative(x, i):
+    return i * np.pi * np.cos(i * np.pi * x)
 
-     Returns: Stiffness matrix (K_ij) and load vector (f_i)
-    
-    """
-    K = np.zeros((N,N))
-    f = np.zeros((N))
-    for i in range(N):
-        integrand_rhs = lambda x: x * Basis_deriv(i,x)
-        # a =0 and b =1
-        f[i] = quad(integrand_rhs,a,b)[0]
-        for j in range(N):
-            integrand_lhs = lambda x: Basis_deriv(i,x) * Basis_deriv(j,x)
-            # a =0 and b =1
-            K[i][j] = quad(integrand_lhs,a,b)[0]
-    
-    return [K,f]
+# Define the function f(x)
+def f_x(x):
+    return x  
 
-def trial_function(coeff,x,N):
-    soln = 0.0
-    for i in range(1, N+1):
-        soln += coeff[i-1] * Basis(i, x)
-    return soln
+def exact_solution(x):
+    return -(1/6) * x**3 + (1/2) * x**2
 
-def main():
-    """ Main entry point of the script """
-    #Let N = 3 as in problem statement
-    N = 3
-    #boundary condtions
-    x_val =.5
-    a=0
-    b=1
-    Kf = Galerkin_kf(N,a,b)
+# Stiffness matrix calculation
+K = np.zeros((N, N))
 
-    print(Kf[0])
-    print(Kf[1])
+for i in range(1, N + 1):
+    for j in range(1, N + 1):
+        integrand = lambda x: k * basis_derivative(x, i) * basis_derivative(x, j)
+        K[i - 1, j - 1], _ = quad(integrand, 0, 1)  # Assuming limits 0 to 1
 
-    #solve for the coefficients
-    coeff = np.linalg.solve(Kf[0],Kf[1])
-    #calculate approximate solution given an x value
-    approximate = trial_function(coeff, x_val, N)
+print("Stiffness Matrix (K):\n", K)
 
-    print(approximate + ' at ' + ' x = ' + str(x_val))
+# Load vector calculation
 
-if __name__ == "__main__":
-    """ This is executed when run from the command line """
-    main()
+f = np.zeros(N)
+
+for i in range(1, N + 1):
+    integrand = lambda x: f_x(x) * basis_function(x, i)
+    f[i - 1], _ = quad(integrand, 0, 1)  # Assuming limits 0 to 1
+
+print("Load Vector (f):\n", f)
+
+coeff = np.linalg.solve(np.linalg.inv(K),f)
+
+print(coeff)
+
+x_values = np.linspace(0, 1,100)  # Generating x values for plotting
+y_h = np.zeros_like(x_values)
+
+for i in range(N):
+    y_h += coeff[i] * basis_function(x_values, i + 1)
+
+# Calculate y values for the exact solution
+y_exact = exact_solution(x_values)
+
+plt.figure(figsize=(8, 6))
+plt.plot(x_values, y_h, label='Approximate Solution (y_h)')
+# Plot the exact solution
+plt.plot(x_values, y_exact, label='Exact Solution')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Exact vs Approximate Solution to -y\'\' = x')
+plt.legend()
+plt.grid(True)
+plt.show()
+plt.savefig('approximate_vs_exact.jpg')
+
+
 
 
